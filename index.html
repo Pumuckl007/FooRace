@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebGL Demo</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/reset.css"></style>
+    <link rel="stylesheet" href="css/global.css"></style>
+    <link rel="stylesheet" href="css/hud.css"></style>
+    <script src="libs/three.js"></script>
+    <script src="libs/objloader.js"></script>
+    <script src="libs/physijs.js"></script>
+    <script>
+    Physijs.scripts.worker = "libs/physijs_worker.js";
+    Physijs.scripts.ammo = "ammo.js";
+    </script>
+  </head>
+  <body oncontextmenu="return false;">
+    <div id="container">
+    <div class = "webglcanvas" id="gamecanvas"></div>
+    <script src="src/initthree.js"></script>
+    <script src="src/vehicle.js"></script>
+    <script src="src/add.js"></script>
+  </body>
+</html>

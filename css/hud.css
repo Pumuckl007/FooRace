@@ -1,0 +1,11 @@
+.thrust {
+  position: fixed;
+  bottom: 2px;
+  left: 2px;
+  padding: 0.3em;
+  z-index: 1;
+  background-color: rgba(18,18,18,0.8);
+  border-radius: 3px;
+  color: #33FFFF;
+  font-size: 2em;
+}

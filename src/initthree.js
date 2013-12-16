@@ -11,7 +11,7 @@ game.initializeScene = function(){
   game.scene = new Physijs.Scene();
   game.scene.setGravity(new THREE.Vector3( 0, -30, 0 ));
   game.scene.fog = new THREE.FogExp2( 0x040413, 0.001 );
-  game.dir_light = new THREE.DirectionalLight( 0xEEEEFF );
+  game.dir_light = new THREE.DirectionalLight( 0xFFEEEE );
   game.dir_light.position.set( 215/2, 390/2, 135/2 );
   game.dir_light.target.position.copy( game.scene.position );
   game.dir_light.castShadow = true;
@@ -22,10 +22,10 @@ game.initializeScene = function(){
   game.dir_light.shadowCameraNear = 20;
   game.dir_light.shadowCameraFar = 1200;
   game.dir_light.shadowBias = -.001
-  game.dir_light.shadowMapWidth = game.dir_light.shadowMapHeight = 8191;
+  game.dir_light.shadowMapWidth = game.dir_light.shadowMapHeight = 4096;
   game.dir_light.shadowDarkness = .5;
-  game.dir_light.shadowCameraVisible = true;
   game.scene.add( game.dir_light );
+  game.scene.addEventListener('update', game.physiUpdate);
 
   game.add();
 
@@ -56,6 +56,7 @@ game.add = function(){
   ground.position.y = -10;
   ground.receiveShadow = true;
   game.scene.add(ground)
+
 }
 game.renderScene = function(){
   game.update();
@@ -70,8 +71,25 @@ game.update = function(){
     var z = obj.position.z;
     game.camera.position.set(x - 7, y + 8, z + 30);
   }
+  if(typeof game.updateControls !== 'undefined'){
+    game.updateControls();
+    var length = game.scene.children.length;
+    for(var i = 0; i < length; i++){
+      if(typeof game.scene.children[i].update !== 'undefined'){
+        game.scene.children[i].update();
+      }
+    }
+  }
+}
+game.physiUpdate = function(){
+  var length = game.scene.children.length;
+  for(var i = 0; i < length; i++){
+    if(typeof game.scene.children[i].physiUpdate !== 'undefined'){
+      game.scene.children[i].physiUpdate();
+    }
+  }
 }
 
 game.initializeScene();
 requestAnimationFrame(game.step);
-game.renderScene();
+game.renderer.render(game.scene, game.camera);

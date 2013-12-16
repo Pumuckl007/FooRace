@@ -1,13 +1,23 @@
-game.generateVehicle = function(body, bodymaterial, wheel, wheelmaterial, tune, name) {
-  var mesh = new Physijs.ConvexMesh(body, bodymaterial);
-  mesh.castShadow = mesh.receiveShadow = true;
-  mesh.name = name;
-  var vehicle = new Physijs.Vehicle(mesh, tune);
-  console.log(vehicle.addWheel);
-  vehicle.name = name;
-  game.scene.add(vehicle);
+game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){  
+  var turn = 0;
+  var power = 0;
+  var lighton = false;
+  var fadebrake = 0;
+  var brake = false;
+  var engineOn = true;
+  var reset = false;
+  //KN*m/s
+  var MAXPOWER = 30.96;
+  var BRAKERANGE = 500;
+
+  // Audio.load("sound/Engien", "carEngien" + name);
+
+  body.castShadow = body.receiveShadow = true;
+  body.name = name;
+  this.physi = new Physijs.Vehicle(body, tune);
+  game.scene.add(this.physi);
   for(var i = 0; i < 4; i++){
-    vehicle.addWheel(
+    this.physi.addWheel(
       wheel,
       wheelmaterial,
       new THREE.Vector3(
@@ -20,42 +30,134 @@ game.generateVehicle = function(body, bodymaterial, wheel, wheelmaterial, tune, 
       0.5,
       0.7,
       i < 2 ? false : true
-  );
+    );
   }
-  vehicle.turn = 0;
-  vehicle.steer = function(rotation){
-    this.turn += rotation;
-    if(this.turn > 40){
-      this.turn = 40;
+
+  this.steer = function(rotation){
+    turn += rotation;
+  };
+
+  this.accelerate = function(aPower){
+    power += aPower;
+    var volcity = this.physi.mesh.getLinearVelocity().x;
+    if(this.physi.mesh.rotation.y < 0 ? (volcity > 0) : (volcity < 0)){
+      brake = true;
     }
-    if(this.turn < -40){
-      this.turn = -40;
+    if(this.physi.mesh.rotation.y === 0 || volcity === 0){
+      brake = false;
     }
-    var radians = (this.turn * (Math.PI/180));
-    this.setSteering(radians, 0);
-    this.setSteering(radians, 1);
-  }
-  vehicle.power = 0;
-  vehicle.accelerate = function(power){
-    this.power += power;
-    if(this.power > 0){
-      this.applyEngineForce(this.power);
-      this.releasBreaks();
+  };
+
+  this.break = function(hardness){
+    power -= hardness;
+    var volcity = this.physi.mesh.getLinearVelocity().x;
+    if(this.physi.mesh.rotation.y < 0 ? (volcity < 0) : (volcity > 0)){
+      brake = true;
     }
-  }
-  vehicle.break = function(hardness){
-    this.power -= hardness;
-    if(this.power < 0){
-      this.setBrake( -this.breakPow, 2 );
-      this.setBrake( -this.breakPow, 3 );
-      this.applyEngineForce(0);
+    if(this.physi.mesh.rotation.y === 0 || volcity === 0){
+      brake = false;
+    }
+  };
+
+  this.releaseBrakes = function(){
+    fadebrake = 0;
+  };
+  var thls = this;
+  body.update = function(){
+    thls.update();
+  };
+  this.update = function(){
+    if(engineOn){
+      // Audio.playLoopingSound("carEngien" + name,
+       // this.physi.mesh.position.x,
+       // this.physi.mesh.position.y,
+       // this.physi.mesh.position.z);
+      var speed = Math.sqrt(
+        Math.pow(this.physi.mesh.getLinearVelocity().x,2) + 
+        Math.pow(this.physi.mesh.getLinearVelocity().y,2) + 
+        Math.pow(this.physi.mesh.getLinearVelocity().z,2));
+      if(power > MAXPOWER * 100 + BRAKERANGE){
+        power = MAXPOWER * 100 + BRAKERANGE;
+      }
+      if(power < MAXPOWER * -35 - BRAKERANGE){
+        power = MAXPOWER * -35 - BRAKERANGE;
+      }
+      if(brake){
+        this.physi.setBrake(200, 2);
+        this.physi.setBrake(200, 3);
+        this.physi.applyEngineForce(0);
+        brake = false;
+      } else {
+          if(Math.abs(power) <= BRAKERANGE){
+          this.physi.setBrake(5, 2);
+          this.physi.setBrake(5, 3);
+        } else {
+          if(fadebrake !== 0){
+            fadebrake = 0;
+            this.physi.setBrake(0, 2);
+            this.physi.setBrake(0, 3);
+          }
+          if(power > 0){
+            this.physi.applyEngineForce(power - BRAKERANGE);
+          } else {
+            this.physi.applyEngineForce(power + BRAKERANGE);
+          }
+        }
+      }
+      if(turn > 40){
+      turn = 40;
+      }
+      if(turn < -40){
+        turn = -40;
+      }
+      if(turn > 0){
+        turn -= 0.5 + (speed * 0.05 * (turn/30));
+      }
+      if(turn < 0){
+        turn += 0.5 + (speed * 0.05 * (turn/30));
+      }
+      var radians = (turn * (Math.PI/180));
+      this.physi.setSteering(radians, 0);
+      this.physi.setSteering(radians, 1);
+      if(power > 0){
+        power -= 1;
+      } else {
+        power += 1;
+      }
     } else {
-      this.applyEngineForce(this.power);
+      // Audio.stopSound("carEngien" + name);
+      this.physi.applyEngineForce(0)
+      fadebrake = 1;
+      this.physi.setBrake(Math.abs(power)/10 + 10, 2);
+      this.physi.setBrake(Math.abs(power)/10 + 10, 3);
     }
+  };
+  body.physiUpdate = function(){
+    thls.physiUpdate();
   }
-  vehicle.releasBreaks = function(){
-    this.setBrake( 0, 2 );
-    this.setBrake( 0, 3 );
+  this.physiUpdate = function(){
   }
-  return vehicle;
-}
+  if(controled){
+  game.controlUpdate.push(function(keysDown){
+      if(keysDown[83]){
+        thls.break(50);
+      }
+      if(keysDown[87]){
+        thls.accelerate(50);
+      }
+      if(keysDown[65]){
+        thls.steer(1);
+      }
+      if(keysDown[68]){
+        thls.steer(-1);
+      }
+      if(keysDown[82]){
+        reset = true;
+      }
+      if(keysDown[69]){
+        engineOn = !engineOn;
+        keysDown[69] = false;
+      }
+    });
+  }
+};

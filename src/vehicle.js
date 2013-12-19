@@ -4,8 +4,9 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
   var lighton = false;
   var fadebrake = 0;
   var brake = false;
-  var engineOn = true;
+  var engineOn = false;
   var reset = false;
+  var accelerating = false;
   //KN*m/s
   var MAXPOWER = 30.96;
   var BRAKERANGE = 500;
@@ -38,6 +39,7 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
   };
 
   this.accelerate = function(aPower){
+    accelerating = true;
     power += aPower;
     var volcity = this.physi.mesh.getLinearVelocity().x;
     if(this.physi.mesh.rotation.y < 0 ? (volcity > 0) : (volcity < 0)){
@@ -49,6 +51,7 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
   };
 
   this.break = function(hardness){
+    accelerating = true;
     power -= hardness;
     var volcity = this.physi.mesh.getLinearVelocity().x;
     if(this.physi.mesh.rotation.y < 0 ? (volcity < 0) : (volcity > 0)){
@@ -97,11 +100,17 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
             this.physi.setBrake(0, 2);
             this.physi.setBrake(0, 3);
           }
-          if(power > 0){
-            this.physi.applyEngineForce(power - BRAKERANGE);
+          if(!accelerating){
+            this.physi.setBrake(50, 2);
+            this.physi.setBrake(50, 3);
           } else {
-            this.physi.applyEngineForce(power + BRAKERANGE);
-          }
+            accelerating = false;
+            if(power > 0){
+              this.physi.applyEngineForce(power - BRAKERANGE);
+            } else {
+              this.physi.applyEngineForce(power + BRAKERANGE);
+            }
+          };
         }
       }
       if(turn > 40){

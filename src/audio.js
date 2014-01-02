@@ -10,7 +10,7 @@ window.Audio = function(){
     // Frequency for mixing output buffer, in units of Hz
     frequency: 44100,
     // Refresh interval for mixer, in units of Hz
-    refreshInterval: 16,
+    refreshInterval: 128,
     // Number of output channels (1 or 2)
     channels: 2
   });

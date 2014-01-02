@@ -1,4 +1,4 @@
-.thrust {
+.power {
   position: fixed;
   bottom: 2px;
   left: 2px;
@@ -8,4 +8,18 @@
   border-radius: 3px;
   color: #33FFFF;
   font-size: 2em;
+}
+.item {
+  position: fixed;
+  bottom: 2px;
+  right: 2px;
+  width: 140px;
+  height: 140px;
+  z-index: 1;
+  background-color: rgba(127,25,0,0.8);
+  border-radius: 3px;
+  color: #33FFFF;
+  font-size: 2em;
+  border: solid #FF7700;
+  border-width: 2px;
 }

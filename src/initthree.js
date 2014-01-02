@@ -1,6 +1,8 @@
-var game = {};
 game.canvasWidth = window.innerWidth, game.canvasHeight = window.innerHeight;
 game.initializeScene = function(){
+  game.gui.addScreen("main");
+  game.gui.addElement(document.getElementById("gamecanvas"), "main");
+  game.gui.setScreenHidden(false, "main");
   game.renderer = new THREE.WebGLRenderer({antialias:true});
   game.renderer.setClearColor(0x66AAFF, 1);
   game.renderer.setSize(game.canvasWidth, game.canvasHeight);
@@ -15,14 +17,14 @@ game.initializeScene = function(){
   game.dir_light.position.set( 215/2, 390/2, 135/2 );
   game.dir_light.target.position.copy( game.scene.position );
   game.dir_light.castShadow = true;
-  game.dir_light.shadowCameraLeft = -500;
-  game.dir_light.shadowCameraTop = -500;
-  game.dir_light.shadowCameraRight = 500;
-  game.dir_light.shadowCameraBottom = 500;
+  game.dir_light.shadowCameraLeft = -75;
+  game.dir_light.shadowCameraTop = -75;
+  game.dir_light.shadowCameraRight = 75;
+  game.dir_light.shadowCameraBottom = 75;
   game.dir_light.shadowCameraNear = 20;
   game.dir_light.shadowCameraFar = 1200;
   game.dir_light.shadowBias = -.001
-  game.dir_light.shadowMapWidth = game.dir_light.shadowMapHeight = 4096;
+  game.dir_light.shadowMapWidth = game.dir_light.shadowMapHeight = 1800;
   game.dir_light.shadowDarkness = .5;
   game.scene.add( game.dir_light );
   game.scene.addEventListener('update', game.physiUpdate);
@@ -45,9 +47,20 @@ game.initializeScene = function(){
   game.ambientLight = new THREE.AmbientLight(0x202020);
   game.scene.add(game.ambientLight);
 }
+game.frame = 0;
+game.fps = 20;
+game.lasttimestamp = 0;
 game.step = function(timestamp) {
-  game.renderScene();
+  var time = timestamp - game.lasttimestamp;
+  game.lasttimestamp = timestamp;
+  game.update();
+  game.scene.simulate();
+  if(game.frame > ((1000/time)/game.fps)){
+    game.renderScene();
+    game.frame = 0;
+  }
   requestAnimationFrame(game.step);
+  game.frame ++;
 }
 game.add = function(){
   var groundgeom = new THREE.CubeGeometry(500,2,500);
@@ -59,8 +72,7 @@ game.add = function(){
 
 }
 game.renderScene = function(){
-  game.update();
-  game.scene.simulate();
+  game.renderUpdate();
   game.renderer.render(game.scene, game.camera);
 }
 game.update = function(){
@@ -70,6 +82,11 @@ game.update = function(){
     var y = obj.position.y;
     var z = obj.position.z;
     game.camera.position.set(x - 7, y + 8, z + 30);
+    game.dir_light.position.set(215/3 + x, 390/3 + y, 135/3 + z);
+    var pos = obj.position.clone();
+    pos.x += 0.1;
+    pos.z += 0.1;
+    game.dir_light.target.position.copy(pos);
   }
   if(typeof game.updateControls !== 'undefined'){
     game.updateControls();
@@ -78,6 +95,14 @@ game.update = function(){
       if(typeof game.scene.children[i].update !== 'undefined'){
         game.scene.children[i].update();
       }
+    }
+  }
+}
+game.renderUpdate = function(){
+  var length = game.scene.children.length;
+  for(var i = 0; i < length; i++){
+    if(typeof game.scene.children[i].renderUpdate !== 'undefined'){
+      game.scene.children[i].renderUpdate();
     }
   }
 }

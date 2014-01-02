@@ -7,11 +7,12 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
   var engineOn = false;
   var reset = false;
   var accelerating = false;
+  var itemDisplay;
   //KN*m/s
   var MAXPOWER = 30.96;
   var BRAKERANGE = 500;
 
-  // Audio.load("sound/Engien", "carEngien" + name);
+  Audio.load("sound/Engien", "carEngien" + name);
 
   body.castShadow = body.receiveShadow = true;
   body.name = name;
@@ -70,11 +71,11 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
     thls.update();
   };
   this.update = function(){
-    if(engineOn){
-      // Audio.playLoopingSound("carEngien" + name,
-       // this.physi.mesh.position.x,
-       // this.physi.mesh.position.y,
-       // this.physi.mesh.position.z);
+    if(engineOn === true){
+      Audio.playLoopingSound("carEngien" + name,
+       this.physi.mesh.position.x,
+       this.physi.mesh.position.y,
+       this.physi.mesh.position.z);
       var speed = Math.sqrt(
         Math.pow(this.physi.mesh.getLinearVelocity().x,2) + 
         Math.pow(this.physi.mesh.getLinearVelocity().y,2) + 
@@ -85,24 +86,28 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
       if(power < MAXPOWER * -35 - BRAKERANGE){
         power = MAXPOWER * -35 - BRAKERANGE;
       }
+      var i = 0;
       if(brake){
         this.physi.setBrake(200, 2);
         this.physi.setBrake(200, 3);
         this.physi.applyEngineForce(0);
         brake = false;
+        i++;
       } else {
-          if(Math.abs(power) <= BRAKERANGE){
+        if(Math.abs(power) <= BRAKERANGE){
           this.physi.setBrake(5, 2);
           this.physi.setBrake(5, 3);
+          i++;
         } else {
           if(fadebrake !== 0){
             fadebrake = 0;
             this.physi.setBrake(0, 2);
             this.physi.setBrake(0, 3);
+            i++;
           }
           if(!accelerating){
-            this.physi.setBrake(50, 2);
-            this.physi.setBrake(50, 3);
+            this.physi.setBrake(500, 2);
+            this.physi.setBrake(500, 3);
           } else {
             accelerating = false;
             if(power > 0){
@@ -110,7 +115,7 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
             } else {
               this.physi.applyEngineForce(power + BRAKERANGE);
             }
-          };
+          }
         }
       }
       if(turn > 40){
@@ -133,21 +138,41 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
       } else {
         power += 1;
       }
-    } else {
-      // Audio.stopSound("carEngien" + name);
+    } 
+    if(engineOn === false) {
+      power = 0;
+      Audio.stopSound("carEngien" + name);
       this.physi.applyEngineForce(0)
       fadebrake = 1;
-      this.physi.setBrake(Math.abs(power)/10 + 10, 2);
-      this.physi.setBrake(Math.abs(power)/10 + 10, 3);
+      this.physi.setBrake(500, 2);
+      this.physi.setBrake(500, 3);
+    }
+    if(controled){
+      this.mesh.rotation.y += Math.PI/100;
+      if(this.mesh.rotation.y > Math.PI){
+        this.mesh.rotation.y = 0;
+      }
     }
   };
+  var powerDisplay;
   body.physiUpdate = function(){
     thls.physiUpdate();
+    if(controled){
+      powerDisplay.textContent = power; 
+    }
+  }
+  body.renderUpdate = function(){
+    thls.renderUpdate();
+  }
+  this.renderUpdate = function(){
+    if(controled){
+      this.renderer.render(this.scene, this.camera);
+    }
   }
   this.physiUpdate = function(){
   }
   if(controled){
-  game.controlUpdate.push(function(keysDown){
+    game.controlUpdate.push(function(keysDown){
       if(keysDown[83]){
         thls.break(50);
       }
@@ -168,5 +193,32 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
         keysDown[69] = false;
       }
     });
+    powerDisplay = document.createElement("p");
+    document.getElementById("gui").appendChild(powerDisplay);
+    powerDisplay.className = "power";
+    game.gui.addScreen(name + "hud");
+    game.gui.addElement(powerDisplay, name + "hud");
+    itemDisplay = document.createElement("div");
+    document.getElementById("gui").appendChild(itemDisplay);
+    itemDisplay.className = "item";
+    game.gui.addElement(itemDisplay, name + "hud");
+    this.renderer = new THREE.WebGLRenderer({antialias:true, alpha: true });
+    this.renderer.setClearColor(0x000000, 0);
+    this.renderer.setSize(140,140);
+    itemDisplay.appendChild(this.renderer.domElement);
+    this.camera = new THREE.PerspectiveCamera(45, 1, 0.05, 100);
+    this.scene = new THREE.Scene();
+    this.camera.location = new THREE.Vector3(0,0,0);
+    this.camera.position.set(2,1,1.5);
+    this.camera.lookAt(this.scene.position);
+    this.dir_light = new THREE.DirectionalLight( 0xFFFFFF );
+    this.dir_light.position.set( 215/2, 390/2, 135/2 );
+    this.dir_light.target.position.copy( this.scene.position );
+    this.scene.add(this.dir_light);
+    var geom = new THREE.CubeGeometry(1,1,1);
+    var mat = new THREE.MeshPhongMaterial(0x559911);
+    this.mesh = new THREE.Mesh(geom,mat);
+    this.scene.add(this.mesh);
+    this.renderer.render(this.scene, this.camera);
   }
 };

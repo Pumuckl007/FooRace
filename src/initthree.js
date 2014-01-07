@@ -1,4 +1,12 @@
 game.canvasWidth = window.innerWidth, game.canvasHeight = window.innerHeight;
+game.frame = 0;
+game.fps = 30;
+game.lasttimestamp = 0;
+game.shadowMapSize = 75;
+game.shadowMapDedatil = 20;
+game.lastState = true;
+game.lasttimeforsave = 0;
+
 game.initializeScene = function(){
   game.gui.addScreen("main");
   game.gui.addElement(document.getElementById("gamecanvas"), "main");
@@ -17,14 +25,14 @@ game.initializeScene = function(){
   game.dir_light.position.set( 215/2, 390/2, 135/2 );
   game.dir_light.target.position.copy( game.scene.position );
   game.dir_light.castShadow = true;
-  game.dir_light.shadowCameraLeft = -75;
-  game.dir_light.shadowCameraTop = -75;
-  game.dir_light.shadowCameraRight = 75;
-  game.dir_light.shadowCameraBottom = 75;
+  game.dir_light.shadowCameraLeft = -game.shadowMapSize;
+  game.dir_light.shadowCameraTop = -game.shadowMapSize;
+  game.dir_light.shadowCameraRight = game.shadowMapSize;
+  game.dir_light.shadowCameraBottom = game.shadowMapSize;
   game.dir_light.shadowCameraNear = 20;
   game.dir_light.shadowCameraFar = 1200;
   game.dir_light.shadowBias = -.001
-  game.dir_light.shadowMapWidth = game.dir_light.shadowMapHeight = 1800;
+  game.dir_light.shadowMapWidth = game.dir_light.shadowMapHeight = game.shadowMapSize * game.shadowMapDedatil;
   game.dir_light.shadowDarkness = .5;
   game.scene.add( game.dir_light );
   game.scene.addEventListener('update', game.physiUpdate);
@@ -47,28 +55,55 @@ game.initializeScene = function(){
   game.ambientLight = new THREE.AmbientLight(0x202020);
   game.scene.add(game.ambientLight);
 }
-game.frame = 0;
-game.fps = 20;
-game.lasttimestamp = 0;
 game.step = function(timestamp) {
-  var time = timestamp - game.lasttimestamp;
-  game.lasttimestamp = timestamp;
-  game.update();
-  game.scene.simulate();
-  if(game.frame > ((1000/time)/game.fps)){
-    game.renderScene();
-    game.frame = 0;
-  }
   requestAnimationFrame(game.step);
-  game.frame ++;
+  if(!game.gui.isScreenHidden("main")){
+    game.lastState = true;
+    var time = timestamp - game.lasttimestamp;
+    game.lasttimestamp = timestamp;
+    game.update();
+    game.scene.simulate(time/1000);
+    if(game.frame > ((1000/time)/game.fps)){
+      game.renderScene();
+      game.frame = 0;
+    }
+    game.frame ++;
+  } else {
+    game.lasttimestamp = timestamp;
+  }
 }
 game.add = function(){
   var groundgeom = new THREE.CubeGeometry(500,2,500);
+  var wallgeom = new THREE.CubeGeometry(500,2,0.1);
   var groundmaterial = new Physijs.createMaterial(new THREE.MeshPhongMaterial({color:0x444499}), 0.4,0.05);
+  var wallmaterial = new Physijs.createMaterial(new THREE.MeshPhongMaterial({color:0x990000}), 0.4,0.05);
   var ground = new Physijs.BoxMesh(groundgeom, groundmaterial, 0);
+  var wallnorth = new Physijs.BoxMesh(wallgeom, wallmaterial, 0);
+  var walleast = new Physijs.BoxMesh(wallgeom, wallmaterial, 0);
+  var wallsouth = new Physijs.BoxMesh(wallgeom, wallmaterial, 0);
+  var wallwest = new Physijs.BoxMesh(wallgeom, wallmaterial, 0);
   ground.position.y = -10;
   ground.receiveShadow = true;
-  game.scene.add(ground)
+  game.scene.add(ground);
+  wallnorth.position.z = -250;
+  wallnorth.position.y = -8;
+  wallnorth.receiveShadow = true;
+  game.scene.add(wallnorth);
+  wallsouth.position.z = 250;
+  wallsouth.position.y = -8;
+  wallsouth.receiveShadow = true;
+  game.scene.add(wallsouth);
+  walleast.rotation.y = Math.PI/2
+  walleast.position.x = -250;
+  walleast.position.y = -8;
+  walleast.receiveShadow = true;
+  game.scene.add(walleast);
+  wallwest.rotation.y = Math.PI/2
+  wallwest.position.x = 250;
+  wallwest.position.y = -8;
+  wallwest.receiveShadow = true;
+  game.scene.add(wallwest);
+
 
 }
 game.renderScene = function(){

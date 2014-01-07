@@ -8,6 +8,8 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
   var reset = false;
   var accelerating = false;
   var itemDisplay;
+  var item;
+  var itemPart;
   //KN*m/s
   var MAXPOWER = 30.96;
   var BRAKERANGE = 500;
@@ -17,6 +19,7 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
   body.castShadow = body.receiveShadow = true;
   body.name = name;
   this.physi = new Physijs.Vehicle(body, tune);
+  window.bod = this.physi;
   game.scene.add(this.physi);
   for(var i = 0; i < 4; i++){
     this.physi.addWheel(
@@ -128,7 +131,7 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
         turn -= 0.5 + (speed * 0.05 * (turn/30));
       }
       if(turn < 0){
-        turn += 0.5 + (speed * 0.05 * (turn/30));
+        turn += 0.5 - (speed * 0.05 * (turn/30));
       }
       var radians = (turn * (Math.PI/180));
       this.physi.setSteering(radians, 0);
@@ -148,9 +151,11 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
       this.physi.setBrake(500, 3);
     }
     if(controled){
-      this.mesh.rotation.y += Math.PI/100;
-      if(this.mesh.rotation.y > Math.PI){
-        this.mesh.rotation.y = 0;
+      if(typeof this.mesh !== 'undefined'){
+        this.mesh.rotation.y += Math.PI/100;
+        if(this.mesh.rotation.y > Math.PI){
+          this.mesh.rotation.y = 0;
+        }
       }
     }
   };
@@ -170,6 +175,24 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
     }
   }
   this.physiUpdate = function(){
+  }
+  this.setItem = function(item){
+    this.item = item;
+    if(typeof this.itemPart !== 'undefined'){
+      body.remove(this.itemPart);
+    }
+    this.itemPart = item.getThreeMesh();
+    body.add(this.itemPart);
+    if(controled){
+      if(typeof this.mesh !== 'undefined'){
+        this.scene.remove(this.mesh);
+      }
+      this.mesh = item.getThreeMesh();
+      this.scene.add(this.mesh);
+      this.camera.position.set(2 * item.scale + item.position.x, 1 * item.scale + item.position.y, 1.5 * item.scale + item.position.z);
+      this.camera.location = item.position;
+      this.camera.lookAt(item.position);
+    }
   }
   if(controled){
     game.controlUpdate.push(function(keysDown){
@@ -191,6 +214,33 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
       if(keysDown[69]){
         engineOn = !engineOn;
         keysDown[69] = false;
+      }
+      if(keysDown[49]){
+        var geom = new THREE.CubeGeometry(1,1,1);
+        var mat = new THREE.MeshPhongMaterial({color:0x559911, shading:THREE.FlatShading});
+        var mesh = new THREE.Mesh(geom, mat);
+        mesh.position.y = 7;
+        var item = new game.item(mesh, 1, 0.5, 0.3,
+          "cube", function(){}, function(){}, function(){}, 1, new THREE.Vector3(0,7,0), 1);
+        thls.setItem(item);
+      }
+      if(keysDown[50]){
+        var geom = new THREE.OctahedronGeometry(1,2);
+        var mat = new THREE.MeshPhongMaterial({color:0x559911, shading:THREE.FlatShading});
+        var mesh = new THREE.Mesh(geom, mat);
+        mesh.position.y = 7;
+        var item = new game.item(mesh, 1, 0.5, 0.3,
+          "cube", function(){}, function(){}, function(){}, 0, new THREE.Vector3(0,7,0), 1);
+        thls.setItem(item);
+      }
+      if(keysDown[51]){
+        var geom = new THREE.CylinderGeometry(0, 1.7, 2, 16, 1, true);
+        var mat = new THREE.MeshPhongMaterial({color:0x559911, shading:THREE.FlatShading});
+        var mesh = new THREE.Mesh(geom, mat);
+        mesh.position.y = 7;
+        var item = new game.item(mesh, 1, 0.5, 0.3,
+          "cube", function(){}, function(){}, function(){}, 0, new THREE.Vector3(0,7,0), 2);
+        thls.setItem(item);
       }
     });
     powerDisplay = document.createElement("p");
@@ -215,10 +265,7 @@ game.Vehicle = function(body, wheel, wheelmaterial, tune, name, controled){
     this.dir_light.position.set( 215/2, 390/2, 135/2 );
     this.dir_light.target.position.copy( this.scene.position );
     this.scene.add(this.dir_light);
-    var geom = new THREE.CubeGeometry(1,1,1);
-    var mat = new THREE.MeshPhongMaterial(0x559911);
-    this.mesh = new THREE.Mesh(geom,mat);
-    this.scene.add(this.mesh);
+    
     this.renderer.render(this.scene, this.camera);
   }
 };

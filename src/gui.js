@@ -21,11 +21,8 @@ game.gui = function(){
 		screenhidden[screenid] = callback;
 	}
 	this.setScreenHidden = function(hidden, screenid){
-		var already = screens[screenid].ishidden;
 		screens[screenid].hidden(hidden);
-		if(!already){
-			screenhidden[screenid](hidden);
-		}
+		screenhidden[screenid](hidden);
 	}
 	this.isScreenHidden = function(screenid){
 		return screens[screenid].ishidden;

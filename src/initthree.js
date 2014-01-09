@@ -6,6 +6,7 @@ game.shadowMapSize = 75;
 game.shadowMapDedatil = 20;
 game.lastState = true;
 game.lasttimeforsave = 0;
+game.fullscreen = false;
 
 game.initializeScene = function(){
   game.gui.addScreen("main");

@@ -1,6 +1,10 @@
 game.audiotimestamp = 0;
 //mainmenu
 (function(){
+
+var audio = document.createElement("audio");
+
+
 game.gui.addScreen("mainmenu");
 var background = document.createElement("div");
 background.className = "mainmenubackground";
@@ -17,6 +21,7 @@ start.textContent = "Start Game";
 start.onclick = function(){
 	game.initScene();
 	game.gui.setAllScreensHiddenEcept(["mainmenu", "options"], false);
+	audio.pause();
 }
 game.gui.addElement(startdiv, "mainmenu");
 
@@ -39,18 +44,9 @@ credits.onclick = function(){
 }
 
 
-var audio = document.createElement("audio");
 audio.src = "sound/flatwound_-_The_Long_Goodbye.mp3";
 audio.loop = true;
 audio.play();
-game.gui.setOnScreenHidden(function(hidden){
-	if(hidden){
-		audio.pause();
-		audiotimestamp = audio.currentTime;
-	} else {
-		audio.play();
-	}
-}, "mainmenu");
 })();
 
 //options
@@ -63,36 +59,44 @@ background.id = "optionsdiv";
 game.gui.addElement(background, "options");
 document.getElementById("gui").appendChild(background);
 var startdiv = document.createElement("div");
-var start = document.createElement("p");
-startdiv.appendChild(start);
-startdiv.className = "startbuttondiv";
-start.className = "startbutton";
-game.gui.addElement(start, "options");
+
+var fps = document.createElement("p");
+fps.className = "fpssetting";
+fps.textContent = game.fps + " fps";
+startdiv.appendChild(fps);
+fps.onclick = function(){
+	game.fps += 15;
+	if(game.fps > 120){
+		game.fps = 15;
+	}
+	fps.textContent = game.fps + " fps";
+}
+var fullscreen = document.createElement("p");
+fullscreen.className = "fullscreensetting";
+fullscreen.textContent = game.fullscreen + " fullscreen";
+startdiv.appendChild(fullscreen);
+fullscreen.onclick = function(){
+	toggleFullScreen();
+	game.fullscreen = !game.fullscreen;
+	fullscreen.textContent = game.fullscreen + " fullscreen";
+}
+
+var back = document.createElement("p");
+startdiv.appendChild(back);
+startdiv.className = "optionsdiv";
+back.className = "backbutton";
+game.gui.addElement(back, "options");
 document.getElementById("gui").appendChild(startdiv);
-start.textContent = "Back";
-start.onclick = function(){
+back.textContent = "Back";
+back.onclick = function(){
 	game.gui.setAllScreensHiddenEcept(["mainmenu"], true);
 }
 game.gui.addElement(startdiv, "options");
 
 
-var audio = document.createElement("audio");
-audio.src = "sound/flatwound_-_The_Long_Goodbye.mp3";
-audio.loop = true;
-audio.play();
-audio.pause();
-game.gui.setOnScreenHidden(function(hidden){
-	if(hidden){
-		audio.pause();
-		audiotimestamp = audio.currentTime;
-	} else {
-		audio.currentTime = audiotimestamp;
-		audio.play();
-	}
-}, "options");
 })();
 
-//options
+//credits
 
 (function(){
 game.gui.addScreen("credits");
@@ -129,6 +133,9 @@ abouttextdiv.appendChild(mcredits);
 var musiccred = document.getElementById("musiccredits");
 abouttextdiv.appendChild(musiccred);
 
+var ubuntufontlicence = document.getElementById("ubuntufontcredit");
+abouttextdiv.appendChild(ubuntufontlicence);
+
 var start = document.createElement("p");
 startdiv.appendChild(start);
 startdiv.className = "creditsdiv";
@@ -140,21 +147,6 @@ start.onclick = function(){
 	game.gui.setAllScreensHiddenEcept(["mainmenu"], true);
 }
 
-
-var audio = document.createElement("audio");
-audio.src = "sound/flatwound_-_The_Long_Goodbye.mp3";
-audio.loop = true;
-audio.play();
-audio.pause();
-game.gui.setOnScreenHidden(function(hidden){
-	if(hidden){
-		audio.pause();
-		audiotimestamp = audio.currentTime;
-	} else {
-		audio.currentTime = audiotimestamp;
-		audio.play();
-	}
-}, "credits");
 })();
 
 (function(){
